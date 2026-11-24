@@ -12,8 +12,11 @@ const {
   buildPasswordResetActionUrl,
 } = require('./email_templates');
 const {sendDoctorAccountSetupEmail} = require('./doctor_access');
+const {
+  FIRESTORE_DATABASE_ID,
+  FIRESTORE_TRIGGER_REGION,
+} = require('./firestore_trigger_config');
 
-const FIRESTORE_DATABASE_ID = 'capstone-c98f9';
 const CHO_ADMIN_ROLES = new Set(['CHO_ADMIN', 'CHO_SUPER_ADMIN']);
 
 if (!(typeof admin.getApps === 'function' ? admin.getApps() : admin.apps).length) {
@@ -30,10 +33,10 @@ const rtdb = {ref: (...args) => getDatabase(admin.getApp()).ref(...args)};
  * write the Realtime Database `users/{uid}` node with role/email, and email a
  * secure password-setup link. The link is never persisted in Firestore logs.
  */
-exports.processInvitation = onDocumentCreated({
+exports.processInvitationAsiaEast1 = onDocumentCreated({
   document: 'invitations/{invId}',
   database: FIRESTORE_DATABASE_ID,
-  region: 'us-central1',
+  region: FIRESTORE_TRIGGER_REGION,
   secrets: ['RESEND_API_KEY'],
 }, async (event) => {
   const snap = event.data;

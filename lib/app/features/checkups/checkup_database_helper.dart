@@ -505,10 +505,12 @@ class DatabaseHelper {
         firestoreData.remove('synced'); // Don't save synced flag to Firestore
         final scopedData = await currentMobileFirestoreData(firestoreData);
 
-        await getFirestoreInstance()
-            .collection('checkup_records')
-            .doc(id)
-            .set(scopedData);
+        final reference = await currentMobileFirestoreDocumentReference(
+          'checkup_records',
+          id.toString(),
+          record: scopedData,
+        );
+        await reference.set(scopedData);
 
         await db.update(
           'checkup_records',
@@ -754,10 +756,12 @@ class DatabaseHelper {
           recordData.remove('id');
           final scopedData = await currentMobileFirestoreData(recordData);
 
-          await getFirestoreInstance()
-              .collection('checkup_records')
-              .doc(id)
-              .set(scopedData, SetOptions(merge: true));
+          final reference = await currentMobileFirestoreDocumentReference(
+            'checkup_records',
+            id.toString(),
+            record: scopedData,
+          );
+          await reference.set(scopedData, SetOptions(merge: true));
 
           // Mark as synced
           await db.update(

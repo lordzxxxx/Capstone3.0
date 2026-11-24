@@ -205,6 +205,30 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
     return rows;
   }
 
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _uniqueProductionDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    final byId = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
+    for (final doc in docs) {
+      final row = <String, dynamic>{'id': doc.id, ...doc.data()};
+      if (isSyntheticDemoRecord(row)) continue;
+
+      final existing = byId[doc.id];
+      if (existing == null) {
+        byId[doc.id] = doc;
+        continue;
+      }
+      final existingIsWorkspace = existing.reference.path.startsWith(
+        'barangays/',
+      );
+      final candidateIsWorkspace = doc.reference.path.startsWith('barangays/');
+      if (!existingIsWorkspace && candidateIsWorkspace) {
+        byId[doc.id] = doc;
+      }
+    }
+    return byId.values.toList(growable: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -276,7 +300,9 @@ class _ChoModuleWorkspaceState extends State<ChoModuleWorkspace> {
                         if (!snapshot.hasData) {
                           return const ChoLoadingSkeleton();
                         }
-                        return _content(snapshot.data!.docs);
+                        return _content(
+                          _uniqueProductionDocs(snapshot.data!.docs),
+                        );
                       },
                     ),
             ),

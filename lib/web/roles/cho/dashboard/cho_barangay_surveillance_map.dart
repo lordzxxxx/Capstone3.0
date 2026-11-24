@@ -51,6 +51,33 @@ enum SurveillanceColorMetric {
   final String label;
 }
 
+/// A stable program column for the overview matrix. Unlike individual disease
+/// names, program columns do not change their meaning when one vaccine or
+/// condition happens to have more reports than the others.
+class SurveillanceMatrixColumn {
+  const SurveillanceMatrixColumn(this.label, this.valueOf);
+
+  final String label;
+  final int Function(BarangayMapSurveillanceSummary summary) valueOf;
+}
+
+int _communicableMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.communicableCount;
+int _nonCommunicableMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.nonCommunicableCount;
+int _checkupMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.checkupCount;
+int _prenatalMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.prenatalCount;
+int _immunizationMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.immunizationCount;
+int _referralMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.referralCount;
+int _morbidityMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.morbidityCount;
+int _mortalityMatrixValue(BarangayMapSurveillanceSummary summary) =>
+    summary.mortalityCount;
+
 /// Computed threshold cutoffs for the 5 epidemiological color tiers.
 class EpidemiologicalTierThresholds {
   const EpidemiologicalTierThresholds({
@@ -1054,6 +1081,7 @@ class ChoBarangaySurveillanceEngine {
     ) {
       var fallbackIdx = 0;
       for (final row in rows) {
+        if (isSyntheticDemoRecord(row)) continue;
         final rawId = (row['id'] ?? row['recordId'] ?? row['caseId'] ?? '')
             .toString()
             .trim();
@@ -1860,11 +1888,56 @@ class _ChoBarangaySurveillanceMapState
           const SizedBox(height: 20),
           _buildConditionMatrix(
             summaries: filteredSummaries.take(8).toList(growable: false),
-            topDiseases: activeDiseaseFilter != 'ALL'
-                ? <String>[activeDiseaseFilter]
+            columns:
+                _selectedView == HeatmapView.overview &&
+                    activeDiseaseFilter == 'ALL'
+                ? const <SurveillanceMatrixColumn>[
+                    SurveillanceMatrixColumn(
+                      'Communicable',
+                      _communicableMatrixValue,
+                    ),
+                    SurveillanceMatrixColumn(
+                      'Non-Communicable',
+                      _nonCommunicableMatrixValue,
+                    ),
+                    SurveillanceMatrixColumn(
+                      'Clinical Check-ups',
+                      _checkupMatrixValue,
+                    ),
+                    SurveillanceMatrixColumn(
+                      'Prenatal Care',
+                      _prenatalMatrixValue,
+                    ),
+                    SurveillanceMatrixColumn(
+                      'Immunization',
+                      _immunizationMatrixValue,
+                    ),
+                    SurveillanceMatrixColumn('Referrals', _referralMatrixValue),
+                    SurveillanceMatrixColumn(
+                      'Morbidity',
+                      _morbidityMatrixValue,
+                    ),
+                    SurveillanceMatrixColumn(
+                      'Mortality',
+                      _mortalityMatrixValue,
+                    ),
+                  ]
+                : activeDiseaseFilter != 'ALL'
+                ? <SurveillanceMatrixColumn>[
+                    SurveillanceMatrixColumn(
+                      activeDiseaseFilter,
+                      (summary) =>
+                          summary.diseaseCounts[activeDiseaseFilter] ?? 0,
+                    ),
+                  ]
                 : sortedDiseases
                       .take(5)
-                      .map((entry) => entry.key)
+                      .map(
+                        (entry) => SurveillanceMatrixColumn(
+                          entry.key,
+                          (summary) => summary.diseaseCounts[entry.key] ?? 0,
+                        ),
+                      )
                       .toList(growable: false),
             maxCases: maxCases,
           ),
@@ -1899,11 +1972,7 @@ class _ChoBarangaySurveillanceMapState
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: const Color(0xFF1D4ED8),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: const [
                   BoxShadow(
@@ -1990,23 +2059,26 @@ class _ChoBarangaySurveillanceMapState
               ),
             ),
             if (widget.onRefreshData != null)
-              OutlinedButton.icon(
-                onPressed: widget.onRefreshData,
-                icon: const Icon(Icons.refresh_rounded, size: 16),
-                label: const Text(
-                  'Refresh map data',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2563EB),
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: Color(0xFF93C5FD)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+              Tooltip(
+                message: 'Fetch the latest saved clinical records',
+                child: OutlinedButton.icon(
+                  onPressed: widget.onRefreshData,
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: const Text(
+                    'Refresh map data',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2563EB),
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: Color(0xFF93C5FD)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -4462,11 +4534,13 @@ class _ChoBarangaySurveillanceMapState
 
   Widget _buildConditionMatrix({
     required List<BarangayMapSurveillanceSummary> summaries,
-    required List<String> topDiseases,
+    required List<SurveillanceMatrixColumn> columns,
     required int maxCases,
   }) {
     final focusedCondition =
         _selectedView != HeatmapView.overview && _selectedDisease != 'ALL';
+    final isProgramOverview =
+        _selectedView == HeatmapView.overview && _selectedDisease == 'ALL';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -4490,6 +4564,8 @@ class _ChoBarangaySurveillanceMapState
                 child: Text(
                   focusedCondition
                       ? '$_selectedDisease by Barangay'
+                      : isProgramOverview
+                      ? 'Barangay Health Program Overview'
                       : 'Multi-Disease Barangay Concentration Matrix',
                   style: const TextStyle(
                     color: Color(0xFF0F172A),
@@ -4504,11 +4580,13 @@ class _ChoBarangaySurveillanceMapState
           Text(
             focusedCondition
                 ? 'Reported cases for the selected condition across matching barangays.'
+                : isProgramOverview
+                ? 'Program totals for communicable and noncommunicable care, check-ups, prenatal care, immunization, referrals, morbidity, and mortality. Select a barangay row to focus the map.'
                 : 'Cross-barangay distribution of leading diseases and clinical cases. Select a barangay row to focus the map.',
             style: const TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
           ),
           const SizedBox(height: 12),
-          if (summaries.isEmpty || topDiseases.isEmpty)
+          if (summaries.isEmpty || columns.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
               child: Text(
@@ -4535,7 +4613,7 @@ class _ChoBarangaySurveillanceMapState
                       columnWidths: {
                         0: const FixedColumnWidth(160),
                         1: const FixedColumnWidth(96),
-                        for (var i = 0; i < topDiseases.length; i++)
+                        for (var i = 0; i < columns.length; i++)
                           i + 2: const FlexColumnWidth(),
                       },
                       children: [
@@ -4580,14 +4658,14 @@ class _ChoBarangaySurveillanceMapState
                                 ),
                               ),
                             ),
-                            ...topDiseases.map(
-                              (disease) => Padding(
+                            ...columns.map(
+                              (column) => Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
                                   vertical: 8,
                                 ),
                                 child: Text(
-                                  disease,
+                                  column.label,
                                   textAlign: TextAlign.center,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
@@ -4664,9 +4742,8 @@ class _ChoBarangaySurveillanceMapState
                                   ),
                                 ),
                               ),
-                              ...topDiseases.map((disease) {
-                                final count =
-                                    summary.diseaseCounts[disease] ?? 0;
+                              ...columns.map((column) {
+                                final count = column.valueOf(summary);
                                 final cellColor = count == 0
                                     ? Colors.transparent
                                     : summary.fillColor.withValues(

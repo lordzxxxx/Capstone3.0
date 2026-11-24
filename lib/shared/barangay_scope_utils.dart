@@ -330,32 +330,60 @@ bool recordMatchesInitializationWindow(
 
   final activityDate = extractRecordActivityDate(record);
   if (activityDate == null) {
-    return false;
+    // Imported and manually transcribed records can legitimately predate the
+    // modern timestamp schema. The visibility boundary must not hide records
+    // authored by the same BHW who owns the current barangay workspace.
+    final ownerIds = <String>{
+      (record['createdByUid'] ?? '').toString().trim(),
+      (record['recordScopeUserId'] ?? '').toString().trim(),
+      (record['workspaceImportedForUid'] ?? '').toString().trim(),
+    }..removeWhere((value) => value.isEmpty);
+    return accessScope.userId.isNotEmpty &&
+        ownerIds.contains(accessScope.userId);
   }
 
   return !activityDate.isBefore(visibleFrom);
+}
+
+/// Returns true for records that are explicitly synthetic or carry a stable
+/// demo identifier. Production lists and analytics use this as a final guard
+/// so an accidentally re-run seed cannot be presented as resident data.
+bool isSyntheticDemoRecord(Map<String, dynamic> record) {
+  if (record['isDemoData'] == true) return true;
+
+  final demoDataset = (record['demoDataset'] ?? '').toString().trim();
+  if (demoDataset.isNotEmpty) return true;
+
+  final identifiers = <dynamic>[
+    record['id'],
+    record['patientId'],
+    record['linkedPatientId'],
+    record['patientRecordId'],
+    record['recordId'],
+  ];
+  for (final identifier in identifiers) {
+    final normalized = identifier?.toString().trim().toLowerCase() ?? '';
+    if (normalized.startsWith('demo-') || normalized.startsWith('temp-seed-')) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool recordMatchesAccessScope(
   Map<String, dynamic> record,
   UserAccessScope accessScope, {
   String? selectedBarangay,
-  bool allowHistoricalBhwAnalyticsDemo = false,
 }) {
+  if (isSyntheticDemoRecord(record)) return false;
+  if (!recordMatchesInitializationWindow(record, accessScope)) {
+    return false;
+  }
+
   final scopedRecord = applyBarangayScopeToRecord(
     record,
     accessScope: accessScope,
   );
-  final demoDataset = (scopedRecord['demoDataset'] ?? '').toString();
-  final isBhwAnalyticsDemo =
-      scopedRecord['isDemoData'] == true &&
-      demoDataset.startsWith('bhw-analytics-demo-');
-  final bypassInitializationWindow =
-      allowHistoricalBhwAnalyticsDemo && isBhwAnalyticsDemo;
-  if (!bypassInitializationWindow &&
-      !recordMatchesInitializationWindow(scopedRecord, accessScope)) {
-    return false;
-  }
   final barangay = (scopedRecord['barangay'] ?? '').toString();
   final barangayCode = normalizeStoredBarangayCode(
     (scopedRecord['barangayCode'] ?? '').toString(),
@@ -384,6 +412,43 @@ bool recordMatchesAccessScope(
   }
 
   return false;
+}
+
+/// Removes root/workspace mirrors while preserving distinct clinical events.
+/// Mirrors retain the same document ID, so deduplicating by ID is safe while
+/// deduplicating by patient ID would incorrectly collapse repeat visits.
+List<Map<String, dynamic>> deduplicateFirestoreRecords(
+  Iterable<Map<String, dynamic>> records,
+) {
+  final byDocumentId = <String, Map<String, dynamic>>{};
+  final withoutIdentity = <Map<String, dynamic>>[];
+
+  for (final source in records) {
+    final record = Map<String, dynamic>.from(source);
+    if (isSyntheticDemoRecord(record)) continue;
+
+    final documentId = (record['id'] ?? '').toString().trim();
+    if (documentId.isEmpty) {
+      withoutIdentity.add(record);
+      continue;
+    }
+
+    final existing = byDocumentId[documentId];
+    if (existing == null) {
+      byDocumentId[documentId] = record;
+      continue;
+    }
+
+    final existingPath = (existing['_firestorePath'] ?? '').toString();
+    final candidatePath = (record['_firestorePath'] ?? '').toString();
+    final existingIsWorkspace = existingPath.startsWith('barangays/');
+    final candidateIsWorkspace = candidatePath.startsWith('barangays/');
+    if (!existingIsWorkspace && candidateIsWorkspace) {
+      byDocumentId[documentId] = record;
+    }
+  }
+
+  return <Map<String, dynamic>>[...byDocumentId.values, ...withoutIdentity];
 }
 
 List<Map<String, dynamic>> sortRecordsByActivityDateDescending(

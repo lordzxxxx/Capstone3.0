@@ -136,7 +136,6 @@ class _ChoDashboardState extends State<ChoDashboard> {
   StreamSubscription<QuerySnapshot>? _bhwUsersSubscription;
   StreamSubscription<QuerySnapshot>? _barangayWorkspacesSubscription;
   bool _referralTargetRetryPending = false;
-  bool _patientSyncFallbackAttempted = false;
   bool _initialDashboardSyncTriggered = false;
   bool _initialDoctorAvailabilityCheckTriggered = false;
   bool _isRestartingDashboardSync = false;
@@ -1199,9 +1198,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             setState(() {
               _bhwUsers = ChoBarangaySurveillanceEngine.parseBhwUsers(rows);
             });
@@ -1298,12 +1297,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
     return true;
   }
 
-  Future<void> _startPatientsSync({bool resetFallback = true}) async {
+  Future<void> _startPatientsSync() async {
     final existingSubscription = _patientsSubscription;
     _patientsSubscription = null;
     await _cancelQuerySubscription(existingSubscription);
     if (!mounted) return;
-    if (resetFallback) _patientSyncFallbackAttempted = false;
     setState(() {
       _isLoading = true;
       _syncStatus['patient_records'] = false;
@@ -1311,13 +1309,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
     if (kDebugMode) debugPrint('Syncing patient records...');
 
     final accessScope = _accessScope ?? await _ensureAccessScopeLoaded();
-    Query<Map<String, dynamic>> patientQuery = _buildModuleQuery(
-      'patient_records',
-      accessScope,
-    );
-    if (!_patientSyncFallbackAttempted) {
-      patientQuery = patientQuery.orderBy('createdAt', descending: true);
-    }
+    final patientQuery = _buildModuleQuery('patient_records', accessScope);
 
     _patientsSubscription = patientQuery
         .limit(_dashboardReadLimit)
@@ -1339,9 +1331,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
             final upcomingCheckups = <DateTime>[];
             final overdueQueue = <Map<String, dynamic>>[];
 
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
 
             for (final row in rows) {
               final riskLabel = _patientRiskLabel(row);
@@ -1439,23 +1431,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
           onError: (e) {
             if (!mounted) return;
             if (kDebugMode) debugPrint('✗ Patient sync error: $e');
-            if (!_patientSyncFallbackAttempted) {
-              _patientSyncFallbackAttempted = true;
-              if (kDebugMode) {
-                debugPrint(
-                  'Primary patient Firestore sync failed; retrying without createdAt sort: $e',
-                );
-              }
-              unawaited(_startPatientsSync(resetFallback: false));
-              return;
-            }
-
             if (_activateChoRootFallbackIfNeeded(
               'patient_records',
               e,
               accessScope,
             )) {
-              unawaited(_startPatientsSync(resetFallback: false));
+              unawaited(_startPatientsSync());
               return;
             }
 
@@ -1487,9 +1468,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             final now = DateTime.now();
             final monthStart = DateTime(now.year, now.month, 1);
             final monthStarts = <DateTime>[];
@@ -1509,8 +1490,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               for (final key in monthKeys) key: 0,
             };
             int total = 0;
-            for (final d in snap.docs) {
-              final data = d.data();
+            for (final data in rows) {
               final date = _parseDocDate(data, [
                 'datetime',
                 'date',
@@ -1528,7 +1508,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             }
             if (kDebugMode) {
               debugPrint(
-                '✓ Synced ${snap.docs.length} checkup records ($total this month)',
+                '✓ Synced ${rows.length} checkup records ($total this month)',
               );
             }
             setState(() {
@@ -1575,13 +1555,12 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             int active = 0;
             final upcomingPrenatal = <DateTime>[];
-            for (final d in snap.docs) {
-              final data = d.data();
+            for (final data in rows) {
               final status = (data['status'] ?? '').toString().toLowerCase();
               if (status.contains('active')) active++;
               final dueDate = _parseDocDate(data, <String>[
@@ -1595,7 +1574,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             }
             if (kDebugMode) {
               debugPrint(
-                '✓ Synced ${snap.docs.length} prenatal records ($active active)',
+                '✓ Synced ${rows.length} prenatal records ($active active)',
               );
             }
             setState(() {
@@ -1640,12 +1619,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
             .listen(
               (snap) {
                 if (!mounted) return;
-                final rows = snap.docs
-                    .map(materializeFirestoreRecord)
-                    .toList(growable: false);
+                final rows = deduplicateFirestoreRecords(
+                  snap.docs.map(materializeFirestoreRecord),
+                );
                 final upcomingImmunizations = <DateTime>[];
-                for (final d in snap.docs) {
-                  final data = d.data();
+                for (final data in rows) {
                   final dueDate = _parseDocDate(data, <String>[
                     'nextDoseDueDate',
                     'dueDate',
@@ -1656,9 +1634,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                   if (dueDate != null) upcomingImmunizations.add(dueDate);
                 }
                 if (kDebugMode) {
-                  debugPrint(
-                    '✓ Synced ${snap.docs.length} immunization records',
-                  );
+                  debugPrint('✓ Synced ${rows.length} immunization records');
                 }
                 setState(() {
                   _immunizationRows
@@ -1666,7 +1642,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                     ..addAll(rows);
                   _syncTruncated['immunization_records'] =
                       snap.docs.length >= _dashboardReadLimit;
-                  _immunizationRecords = snap.docs.length;
+                  _immunizationRecords = rows.length;
                   _immunizationForecast = _countUpcomingByWindow(
                     upcomingImmunizations,
                   );
@@ -1703,9 +1679,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             final now = DateTime.now();
             final monthStarts = <DateTime>[];
             for (int i = 5; i >= 0; i--) {
@@ -1724,8 +1700,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             final diseaseTotals = <String, int>{};
             final monthlyDiseaseCounts = <String, Map<String, int>>{};
 
-            for (final d in snap.docs) {
-              final data = d.data();
+            for (final data in rows) {
               final diseaseRaw =
                   (data['disease'] ??
                           data['diagnosis'] ??
@@ -1772,7 +1747,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
             }
 
             if (kDebugMode) {
-              debugPrint('✓ Synced ${snap.docs.length} morbidity records');
+              debugPrint('✓ Synced ${rows.length} morbidity records');
             }
             setState(() {
               _morbidityRows
@@ -1780,7 +1755,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
                 ..addAll(rows);
               _syncTruncated['morbidity_records'] =
                   snap.docs.length >= _dashboardReadLimit;
-              _morbidityReports = snap.docs.length;
+              _morbidityReports = rows.length;
               _diseaseTrendMonthLabels = monthLabels;
               _diseaseTrendSeries = trendSeries;
               _syncStatus['morbidity_records'] = true;
@@ -1816,20 +1791,19 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             if (kDebugMode) {
-              debugPrint('✓ Synced ${snap.docs.length} mortality records');
+              debugPrint('✓ Synced ${rows.length} mortality records');
             }
             setState(() {
               _mortalityRows
                 ..clear()
-                ..addAll(
-                  snap.docs
-                      .map(materializeFirestoreRecord)
-                      .toList(growable: false),
-                );
+                ..addAll(rows);
               _syncTruncated['mortality_records'] =
                   snap.docs.length >= _dashboardReadLimit;
-              _mortalityReports = snap.docs.length;
+              _mortalityReports = rows.length;
               _syncStatus['mortality_records'] = true;
               _recomputeAnalyticsState();
             });
@@ -1863,11 +1837,11 @@ class _ChoDashboardState extends State<ChoDashboard> {
         .listen(
           (snap) {
             if (!mounted) return;
-            final rows = snap.docs
-                .map(materializeFirestoreRecord)
-                .toList(growable: false);
+            final rows = deduplicateFirestoreRecords(
+              snap.docs.map(materializeFirestoreRecord),
+            );
             if (kDebugMode) {
-              debugPrint('✓ Synced ${snap.docs.length} referrals');
+              debugPrint('✓ Synced ${rows.length} referrals');
             }
             setState(() {
               _referralRows
@@ -2435,7 +2409,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         : ((_referralsCompleted / _referralReports) * 100).round();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _panelTeal,
         borderRadius: BorderRadius.circular(16),
@@ -2450,30 +2424,36 @@ class _ChoDashboardState extends State<ChoDashboard> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 860;
+          final compact = constraints.maxWidth < 940;
           final overview = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text(
-                'City Health Operations\nCommand Center',
-                style: TextStyle(
-                  color: _lightOffWhite,
-                  fontSize: 30,
-                  height: 1.08,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: const Text(
+                  'City Health Operations Command Center',
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontSize: 29,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.45,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
-                'One operational view for population coverage, clinical demand, risk surveillance, referrals, and field-service performance.',
-                style: TextStyle(
-                  color: _lightOffWhite.withValues(alpha: 0.72),
-                  fontSize: 13,
-                  height: 1.5,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Text(
+                  'One operational view for population coverage, clinical demand, risk surveillance, referrals, and field-service performance.',
+                  style: TextStyle(
+                    color: _lightOffWhite.withValues(alpha: 0.72),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -2503,62 +2483,98 @@ class _ChoDashboardState extends State<ChoDashboard> {
           );
 
           final snapshot = Container(
-            constraints: const BoxConstraints(maxWidth: 420),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: ChoColors.ice.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: ChoColors.ice.withValues(alpha: 0.16)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
+            child: LayoutBuilder(
+              builder: (context, snapshotConstraints) {
+                final metricsInRow = snapshotConstraints.maxWidth >= 440;
+                final metrics = <Widget>[
+                  _buildHeroMetric(
+                    'Active population',
+                    _safeMetricText(_totalPatients),
+                    'patient records',
+                    _primaryAqua,
+                  ),
+                  _buildHeroMetric(
+                    'Referral completion',
+                    '$completionRate%',
+                    '${_safeMetricText(_referralsCompleted)} completed cases',
+                    _primaryAqua,
+                  ),
+                  _buildHeroMetric(
+                    'Clinical attention',
+                    _safeMetricText(_highRiskPatients + _followUpPatients),
+                    'high-risk and follow-up cases',
+                    _secondaryIceBlue,
+                  ),
+                ];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Icon(
-                      allSynced
-                          ? Icons.cloud_done_rounded
-                          : Icons.cloud_sync_rounded,
-                      color: _primaryAqua,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        allSynced
-                            ? 'All data sources synchronized'
-                            : 'Synchronizing health data sources',
-                        style: const TextStyle(
-                          color: _lightOffWhite,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                    Row(
+                      children: <Widget>[
+                        Icon(
+                          allSynced
+                              ? Icons.cloud_done_rounded
+                              : Icons.cloud_sync_rounded,
+                          color: _primaryAqua,
+                          size: 20,
                         ),
-                      ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            allSynced
+                                ? 'All data sources synchronized'
+                                : 'Synchronizing health data sources',
+                            style: const TextStyle(
+                              color: _lightOffWhite,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 13),
+                    Divider(
+                      height: 1,
+                      color: ChoColors.border.withValues(alpha: 0.8),
+                    ),
+                    const SizedBox(height: 13),
+                    if (metricsInRow)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          for (
+                            var index = 0;
+                            index < metrics.length;
+                            index++
+                          ) ...[
+                            if (index > 0) const SizedBox(width: 12),
+                            Expanded(child: metrics[index]),
+                          ],
+                        ],
+                      )
+                    else
+                      Column(
+                        children: <Widget>[
+                          for (
+                            var index = 0;
+                            index < metrics.length;
+                            index++
+                          ) ...[
+                            if (index > 0) const SizedBox(height: 12),
+                            metrics[index],
+                          ],
+                        ],
+                      ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                _buildHeroMetric(
-                  'Active population view',
-                  _safeMetricText(_totalPatients),
-                  'patient records',
-                  _primaryAqua,
-                ),
-                const SizedBox(height: 10),
-                _buildHeroMetric(
-                  'Referral completion',
-                  '$completionRate%',
-                  '${_safeMetricText(_referralsCompleted)} completed cases',
-                  _primaryAqua,
-                ),
-                const SizedBox(height: 10),
-                _buildHeroMetric(
-                  'Clinical attention',
-                  _safeMetricText(_highRiskPatients + _followUpPatients),
-                  'high-risk and follow-up cases',
-                  _secondaryIceBlue,
-                ),
-              ],
+                );
+              },
             ),
           );
 
@@ -2567,7 +2583,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 overview,
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 snapshot,
               ],
             );
@@ -2575,9 +2591,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Expanded(child: overview),
-              const SizedBox(width: 28),
-              Expanded(child: snapshot),
+              Expanded(flex: 10, child: overview),
+              const SizedBox(width: 32),
+              Expanded(flex: 11, child: snapshot),
             ],
           );
         },
@@ -2598,9 +2614,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
       style: FilledButton.styleFrom(
         backgroundColor: primary ? _primaryAqua : ChoColors.surfaceAlt,
         foregroundColor: primary ? Colors.white : ChoColors.text,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        minimumSize: const Size(0, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: primary ? _primaryAqua : ChoColors.border),
         ),
       ),
@@ -2613,60 +2630,49 @@ class _ChoDashboardState extends State<ChoDashboard> {
     String context,
     Color accent,
   ) {
-    return Row(
-      children: <Widget>[
-        Container(
-          width: 4,
-          height: 44,
-          decoration: BoxDecoration(
-            color: accent,
-            borderRadius: BorderRadius.circular(99),
+    return Container(
+      constraints: const BoxConstraints(minHeight: 76),
+      padding: const EdgeInsets.only(left: 11),
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: accent, width: 3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: _lightOffWhite.withValues(alpha: 0.62),
+              fontSize: 10.5,
+              height: 1.2,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                label,
-                style: TextStyle(
-                  color: _lightOffWhite.withValues(alpha: 0.62),
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: _lightOffWhite,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 3),
-                      child: Text(
-                        context,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.58),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: _lightOffWhite,
+              fontSize: 22,
+              height: 1,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 5),
+          Text(
+            context,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: _lightOffWhite.withValues(alpha: 0.58),
+              fontSize: 9.5,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2963,7 +2969,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
   }) {
     final card = Container(
       width: width,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      constraints: const BoxConstraints(minHeight: 88),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -2979,16 +2986,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
       child: Row(
         children: <Widget>[
           Container(
-            width: 46,
-            height: 46,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: color.withValues(alpha: 0.26)),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 21),
           ),
-          const SizedBox(width: 13),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3000,8 +3007,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         title,
                         style: TextStyle(
                           color: ChoColors.muted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -3009,21 +3016,22 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       value,
                       style: const TextStyle(
                         color: ChoColors.text,
-                        fontSize: 21,
+                        fontSize: 20,
+                        height: 1,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   context,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: ChoColors.muted,
-                    fontSize: 9.5,
-                    height: 1.3,
+                    fontSize: 10,
+                    height: 1.35,
                   ),
                 ),
               ],

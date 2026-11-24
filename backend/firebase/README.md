@@ -154,3 +154,15 @@ Before the first apply or a large content update, export/backup the Firestore
 the same guarded apply command. The script intentionally never performs
 automatic deletes; retire a document by setting `isActive` to false through an
 authorized workflow.
+
+## Guarded clinical-data reset and Barangay 03 BHW move
+
+`prepare_barangay3_reset.py` is the reviewed operational tool for the
+requested reset of clinical records and the `frisky4@gmail.com` BHW scope move.
+It is dry-run by default, includes both root and barangay-nested clinical
+collection groups, and deliberately preserves authentication accounts,
+governance profiles, disease guidance, and barangay metadata.
+
+Do not run an apply until a Firestore backup or clone has completed and has
+been recorded. It requires the recovery resource name and an exact confirmation
+string; this is a safety boundary, not a convenience prompt.

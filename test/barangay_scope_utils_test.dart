@@ -31,7 +31,7 @@ void main() {
     expect(recordMatchesAccessScope(record, boundedScope), isFalse);
   });
 
-  test('marked BHW analytics demo can fill historical trend graphs', () {
+  test('synthetic records are always excluded from production views', () {
     final boundedScope = UserAccessScope(
       userId: scope.userId,
       role: scope.role,
@@ -48,32 +48,71 @@ void main() {
       'demoDataset': 'bhw-analytics-demo-v1',
     };
 
-    expect(
-      recordMatchesAccessScope(
-        record,
-        boundedScope,
-        allowHistoricalBhwAnalyticsDemo: true,
-      ),
-      isTrue,
-    );
+    expect(recordMatchesAccessScope(record, boundedScope), isFalse);
   });
 
-  test('demo bypass never crosses the BHW barangay boundary', () {
+  test('same-BHW imported record without a date remains visible', () {
+    final boundedScope = UserAccessScope(
+      userId: scope.userId,
+      role: scope.role,
+      barangay: scope.barangay,
+      barangayCode: scope.barangayCode,
+      barangayDistrict: scope.barangayDistrict,
+      dataVisibleFrom: DateTime.utc(2026, 7, 16),
+    );
     final record = <String, dynamic>{
-      'barangay': 'Bangcud',
-      'barangayCode': 'BANGCUD',
-      'createdAt': DateTime.utc(2026, 3, 10),
-      'isDemoData': true,
-      'demoDataset': 'bhw-analytics-demo-v1',
+      'barangay': 'Aglayan',
+      'barangayCode': 'AGLAYAN',
+      'createdByUid': scope.userId,
+      'workspaceMirrorOf': 'patient_records/patient-1',
     };
 
+    expect(recordMatchesAccessScope(record, boundedScope), isTrue);
+  });
+
+  test('undated record owned by another user remains bounded', () {
+    final boundedScope = UserAccessScope(
+      userId: scope.userId,
+      role: scope.role,
+      barangay: scope.barangay,
+      barangayCode: scope.barangayCode,
+      barangayDistrict: scope.barangayDistrict,
+      dataVisibleFrom: DateTime.utc(2026, 7, 16),
+    );
+    final record = <String, dynamic>{
+      'barangay': 'Aglayan',
+      'barangayCode': 'AGLAYAN',
+      'createdByUid': 'another-bhw',
+    };
+
+    expect(recordMatchesAccessScope(record, boundedScope), isFalse);
+  });
+
+  test('root and workspace mirrors are deduplicated by document ID', () {
+    final unique = deduplicateFirestoreRecords([
+      {
+        'id': 'checkup-1',
+        '_firestorePath': 'checkup_records/checkup-1',
+        'patientId': 'patient-1',
+      },
+      {
+        'id': 'checkup-1',
+        '_firestorePath': 'barangays/AGLAYAN/checkup_records/checkup-1',
+        'patientId': 'patient-1',
+      },
+      {
+        'id': 'checkup-2',
+        '_firestorePath': 'barangays/AGLAYAN/checkup_records/checkup-2',
+        'patientId': 'patient-1',
+      },
+    ]);
+
+    expect(unique, hasLength(2));
     expect(
-      recordMatchesAccessScope(
-        record,
-        scope,
-        allowHistoricalBhwAnalyticsDemo: true,
-      ),
-      isFalse,
+      unique.firstWhere(
+        (record) => record['id'] == 'checkup-1',
+      )['_firestorePath'],
+      startsWith('barangays/'),
     );
   });
 
