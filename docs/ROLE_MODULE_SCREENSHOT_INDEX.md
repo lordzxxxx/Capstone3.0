@@ -55,3 +55,24 @@ the route remains protected and was not bypassed or reset.
 - Screenshot paths are local repository artifacts under
   `output/playwright/role-pages/`; they are intentionally not deployed as app
   assets.
+
+## Presentation flow — use this order
+
+The numbered copies below are the finalized sequence for the two-minute video.
+Move through them in order; each step hands off to the next role or module.
+
+1. [01 — BHW dashboard](../output/playwright/role-pages/flow/01-bhw-dashboard.png): open the field workflow.
+2. [02 — BHW patients](../output/playwright/role-pages/flow/02-bhw-patients.png): register and retrieve residents.
+3. [03 — BHW check-ups / AI input](../output/playwright/role-pages/flow/03-bhw-checkups-ai-input.png): enter symptoms or structured clinical fields.
+4. [04 — BHW analytics](../output/playwright/role-pages/flow/04-bhw-analytics.png): review barangay-level insight.
+5. [05 — BHW referrals](../output/playwright/role-pages/flow/05-bhw-referrals.png): hand off follow-up work.
+6. [06 — CHO dashboard](../output/playwright/role-pages/flow/06-cho-dashboard.png): show synchronized city operations.
+7. [07 — CHO patients](../output/playwright/role-pages/flow/07-cho-patients.png): review the shared registry.
+8. [08 — CHO check-ups](../output/playwright/role-pages/flow/08-cho-checkups.png): review shared clinical records.
+9. [09 — CHO reports](../output/playwright/role-pages/flow/09-cho-reports.png): export and coordinate operational reporting.
+10. [10 — CHO manage access](../output/playwright/role-pages/flow/10-cho-manage-access.png): show roles and permissions.
+11. [11 — Doctor login](../output/playwright/role-pages/flow/11-doctor-login.png): transition to the protected doctor role.
+12. [12 — Doctor portal protection](../output/playwright/role-pages/flow/12-doctor-portal-protection.png): close on role-based security.
+
+The original role-specific screenshots remain above for direct page reference;
+the `flow/` copies are the finalized, ordered presentation set.
