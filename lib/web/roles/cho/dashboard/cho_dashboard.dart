@@ -2409,7 +2409,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
         : ((_referralsCompleted / _referralReports) * 100).round();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: _panelTeal,
         borderRadius: BorderRadius.circular(16),
@@ -2424,30 +2424,36 @@ class _ChoDashboardState extends State<ChoDashboard> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 860;
+          final compact = constraints.maxWidth < 940;
           final overview = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text(
-                'City Health Operations\nCommand Center',
-                style: TextStyle(
-                  color: _lightOffWhite,
-                  fontSize: 30,
-                  height: 1.08,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: const Text(
+                  'City Health Operations Command Center',
+                  style: TextStyle(
+                    color: _lightOffWhite,
+                    fontSize: 29,
+                    height: 1.1,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.45,
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
-                'One operational view for population coverage, clinical demand, risk surveillance, referrals, and field-service performance.',
-                style: TextStyle(
-                  color: _lightOffWhite.withValues(alpha: 0.72),
-                  fontSize: 13,
-                  height: 1.5,
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Text(
+                  'One operational view for population coverage, clinical demand, risk surveillance, referrals, and field-service performance.',
+                  style: TextStyle(
+                    color: _lightOffWhite.withValues(alpha: 0.72),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
@@ -2477,62 +2483,98 @@ class _ChoDashboardState extends State<ChoDashboard> {
           );
 
           final snapshot = Container(
-            constraints: const BoxConstraints(maxWidth: 420),
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: ChoColors.ice.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: ChoColors.ice.withValues(alpha: 0.16)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
+            child: LayoutBuilder(
+              builder: (context, snapshotConstraints) {
+                final metricsInRow = snapshotConstraints.maxWidth >= 440;
+                final metrics = <Widget>[
+                  _buildHeroMetric(
+                    'Active population',
+                    _safeMetricText(_totalPatients),
+                    'patient records',
+                    _primaryAqua,
+                  ),
+                  _buildHeroMetric(
+                    'Referral completion',
+                    '$completionRate%',
+                    '${_safeMetricText(_referralsCompleted)} completed cases',
+                    _primaryAqua,
+                  ),
+                  _buildHeroMetric(
+                    'Clinical attention',
+                    _safeMetricText(_highRiskPatients + _followUpPatients),
+                    'high-risk and follow-up cases',
+                    _secondaryIceBlue,
+                  ),
+                ];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Icon(
-                      allSynced
-                          ? Icons.cloud_done_rounded
-                          : Icons.cloud_sync_rounded,
-                      color: _primaryAqua,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        allSynced
-                            ? 'All data sources synchronized'
-                            : 'Synchronizing health data sources',
-                        style: const TextStyle(
-                          color: _lightOffWhite,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                    Row(
+                      children: <Widget>[
+                        Icon(
+                          allSynced
+                              ? Icons.cloud_done_rounded
+                              : Icons.cloud_sync_rounded,
+                          color: _primaryAqua,
+                          size: 20,
                         ),
-                      ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            allSynced
+                                ? 'All data sources synchronized'
+                                : 'Synchronizing health data sources',
+                            style: const TextStyle(
+                              color: _lightOffWhite,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 13),
+                    Divider(
+                      height: 1,
+                      color: ChoColors.border.withValues(alpha: 0.8),
+                    ),
+                    const SizedBox(height: 13),
+                    if (metricsInRow)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          for (
+                            var index = 0;
+                            index < metrics.length;
+                            index++
+                          ) ...[
+                            if (index > 0) const SizedBox(width: 12),
+                            Expanded(child: metrics[index]),
+                          ],
+                        ],
+                      )
+                    else
+                      Column(
+                        children: <Widget>[
+                          for (
+                            var index = 0;
+                            index < metrics.length;
+                            index++
+                          ) ...[
+                            if (index > 0) const SizedBox(height: 12),
+                            metrics[index],
+                          ],
+                        ],
+                      ),
                   ],
-                ),
-                const SizedBox(height: 12),
-                _buildHeroMetric(
-                  'Active population view',
-                  _safeMetricText(_totalPatients),
-                  'patient records',
-                  _primaryAqua,
-                ),
-                const SizedBox(height: 10),
-                _buildHeroMetric(
-                  'Referral completion',
-                  '$completionRate%',
-                  '${_safeMetricText(_referralsCompleted)} completed cases',
-                  _primaryAqua,
-                ),
-                const SizedBox(height: 10),
-                _buildHeroMetric(
-                  'Clinical attention',
-                  _safeMetricText(_highRiskPatients + _followUpPatients),
-                  'high-risk and follow-up cases',
-                  _secondaryIceBlue,
-                ),
-              ],
+                );
+              },
             ),
           );
 
@@ -2541,7 +2583,7 @@ class _ChoDashboardState extends State<ChoDashboard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 overview,
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 snapshot,
               ],
             );
@@ -2549,9 +2591,9 @@ class _ChoDashboardState extends State<ChoDashboard> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              Expanded(child: overview),
-              const SizedBox(width: 28),
-              Expanded(child: snapshot),
+              Expanded(flex: 10, child: overview),
+              const SizedBox(width: 32),
+              Expanded(flex: 11, child: snapshot),
             ],
           );
         },
@@ -2572,9 +2614,10 @@ class _ChoDashboardState extends State<ChoDashboard> {
       style: FilledButton.styleFrom(
         backgroundColor: primary ? _primaryAqua : ChoColors.surfaceAlt,
         foregroundColor: primary ? Colors.white : ChoColors.text,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+        minimumSize: const Size(0, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: primary ? _primaryAqua : ChoColors.border),
         ),
       ),
@@ -2587,60 +2630,49 @@ class _ChoDashboardState extends State<ChoDashboard> {
     String context,
     Color accent,
   ) {
-    return Row(
-      children: <Widget>[
-        Container(
-          width: 4,
-          height: 44,
-          decoration: BoxDecoration(
-            color: accent,
-            borderRadius: BorderRadius.circular(99),
+    return Container(
+      constraints: const BoxConstraints(minHeight: 76),
+      padding: const EdgeInsets.only(left: 11),
+      decoration: BoxDecoration(
+        border: Border(left: BorderSide(color: accent, width: 3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: _lightOffWhite.withValues(alpha: 0.62),
+              fontSize: 10.5,
+              height: 1.2,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                label,
-                style: TextStyle(
-                  color: _lightOffWhite.withValues(alpha: 0.62),
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: <Widget>[
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: _lightOffWhite,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 3),
-                      child: Text(
-                        context,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: _lightOffWhite.withValues(alpha: 0.58),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: _lightOffWhite,
+              fontSize: 22,
+              height: 1,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 5),
+          Text(
+            context,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: _lightOffWhite.withValues(alpha: 0.58),
+              fontSize: 9.5,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2937,7 +2969,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
   }) {
     final card = Container(
       width: width,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      constraints: const BoxConstraints(minHeight: 88),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
         color: ChoColors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -2953,16 +2986,16 @@ class _ChoDashboardState extends State<ChoDashboard> {
       child: Row(
         children: <Widget>[
           Container(
-            width: 46,
-            height: 46,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: color.withValues(alpha: 0.26)),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 21),
           ),
-          const SizedBox(width: 13),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2974,8 +3007,8 @@ class _ChoDashboardState extends State<ChoDashboard> {
                         title,
                         style: TextStyle(
                           color: ChoColors.muted,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -2983,21 +3016,22 @@ class _ChoDashboardState extends State<ChoDashboard> {
                       value,
                       style: const TextStyle(
                         color: ChoColors.text,
-                        fontSize: 21,
+                        fontSize: 20,
+                        height: 1,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   context,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: ChoColors.muted,
-                    fontSize: 9.5,
-                    height: 1.3,
+                    fontSize: 10,
+                    height: 1.35,
                   ),
                 ),
               ],
